@@ -16,7 +16,8 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const serviceCollection = client.db('mediTro').collection('services')
-    
+        const orderCollection = client.db('mediTro').collection('orders')
+
         app.get('/services', async(req, res) => {
             const query = {};
             const cursor = serviceCollection.find(query);
@@ -30,6 +31,22 @@ async function run() {
             const service = await serviceCollection.findOne(query);
             res.send(service);
         })
+
+        // orders api 
+        app.get('/orders', async(req, res) => {
+            console.log(req.query);
+            const query = {};
+            const cursor = orderCollection.find(query);
+            const orders = await cursor.toArray();
+            res.send(orders);
+        })
+
+        app.post('/orders', async(req, res) => {
+            const order = req.body;
+            const result = await orderCollection.insertOne(order);
+            res.send(result);
+        })
+
     }
     finally {
 
