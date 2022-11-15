@@ -14,17 +14,17 @@ app.use(express.json())
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.ylc1dr9.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-function verifyJWT (req, res, next){
+function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
-    if(!authHeader){
-       return res.status(401).send({messege: 'unauthorized access'})
+    if (!authHeader) {
+        return res.status(401).send({ messege: 'unauthorized access' })
     }
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
-        if(err){
-            return res.status(403).send({messege: 'Forbidden access'})
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ messege: 'Forbidden access' })
         }
-        req.decoded= decoded;
+        req.decoded = decoded;
         next();
     })
 }
@@ -36,12 +36,19 @@ async function run() {
 
         app.post('/jwt', (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "1d"})
-            res.send({token})
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "1d" })
+            res.send({ token })
         })
 
         app.get('/services', async (req, res) => {
             const query = {};
+            const cursor = serviceCollection.find(query);
+            const services = await cursor.toArray();
+            res.send(services);
+        })
+
+        app.get('/some-services', async (req, res) => {
+            const query = { price: { $lt: 100 } };
             const cursor = serviceCollection.find(query);
             const services = await cursor.toArray();
             res.send(services);
@@ -58,8 +65,8 @@ async function run() {
         app.get('/orders', verifyJWT, async (req, res) => {
             const decoded = req.decoded;
             console.log('inside orders api', decoded)
-            if(decoded.email !== req.query.email){
-                res.status(403).send({messege: 'unauthorized access'})
+            if (decoded.email !== req.query.email) {
+                res.status(403).send({ messege: 'unauthorized access' })
             }
 
             let query = {};
@@ -85,7 +92,7 @@ async function run() {
             const status = req.body.status;
             const query = { _id: ObjectId(id) };
             const updateDoc = {
-                $set:{
+                $set: {
                     status: status
                 }
             }
